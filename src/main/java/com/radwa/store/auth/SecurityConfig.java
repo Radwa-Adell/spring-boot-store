@@ -58,10 +58,19 @@ public class SecurityConfig {
                         c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(c -> {
-                            featureSecurityRules.forEach(r -> r.configure(c));
-                            c.anyRequest().authenticated();
-                        }
-                )
+                    c.requestMatchers(
+                            "/v3/api-docs/**",
+                            "/swagger-ui/**",
+                            "/swagger-ui.html",
+                            "/auth/**"
+                    ).permitAll();
+
+                    featureSecurityRules.forEach(r -> r.configure(c));
+
+                    c.anyRequest().authenticated();
+                })
+
+
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(c -> {
                     c.authenticationEntryPoint(

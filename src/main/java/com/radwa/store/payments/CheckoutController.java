@@ -4,6 +4,7 @@ import com.radwa.store.carts.CartEmptyException;
 import com.radwa.store.carts.CartNotFoundException;
 import com.radwa.store.common.ErrorDto;
 import com.radwa.store.orders.OrderRepository;
+import com.radwa.store.orders.PaymentStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,21 @@ public class CheckoutController {
     ) {
         checkoutService.handleWebhookEvent(new WebhookRequest(headers, payload));
     }
+
+    @PostMapping("/webhook/test")
+    public void handleTestWebhook(@RequestBody Map<String, Object> payload) {
+        Long orderId = ((Number) payload.get("orderId")).longValue();
+        String status = payload.get("paymentStatus").toString();
+
+        PaymentStatus paymentStatus = PaymentStatus.valueOf(status);
+
+        var order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new PaymentException("Order not found"));
+
+        order.setStatus(paymentStatus);
+        orderRepository.save(order);
+    }
+
 
     @ExceptionHandler(PaymentException.class)
     public ResponseEntity<?> handlePaymentException() {
